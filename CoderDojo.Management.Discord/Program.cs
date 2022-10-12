@@ -1,5 +1,4 @@
-﻿// See https://aka.ms/new-console-template for more information
-using CoderDojo.Management.Discord.Services.Interaction;
+﻿using CoderDojo.Management.Discord.Services.Interaction;
 
 using CoderDojo.Management.Discord.InteractionServices;
 

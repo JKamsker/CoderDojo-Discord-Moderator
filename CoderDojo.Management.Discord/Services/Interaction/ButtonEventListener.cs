@@ -1,4 +1,5 @@
-﻿using Discord.WebSocket;
+﻿using Discord;
+using Discord.WebSocket;
 
 //using DiscordBot.Domain.Configuration;
 //using DiscordBot.Modules.Utils.ReactionBase;
@@ -25,10 +26,16 @@ public class ButtonEventListener : IDisposable
 
     private async Task ButtonExecuted(SocketMessageComponent arg)
     {
-        if (_subscriptions.TryGetValue(arg.Message.Id, out var handler))
+        if (!_subscriptions.TryGetValue(arg.Message.Id, out var handler))
         {
-            await handler(arg);
+            await arg.RespondAsync
+            (
+                "Sorry, I've lost my memory for this action :( \r" +
+                "https://giphy.com/gifs/FourRestFilms-social-distancing-four-rest-films-fourrestfilms-XEmTZ0RX0KJTS3gn4w"
+            );
+            return;
         }
+        await handler(arg);
     }
 
     protected virtual void Dispose(bool disposing)

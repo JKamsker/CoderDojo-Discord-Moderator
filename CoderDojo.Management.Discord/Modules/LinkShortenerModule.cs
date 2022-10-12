@@ -20,12 +20,9 @@ using MongoDB.Driver;
 
 namespace CoderDojo.Management.Discord.Modules
 {
-
-
     [Group("shortlink", "Shortens a link!")]
     public class LinkShortenerModule : InteractionModuleBase
     {
-
         private readonly LinkShortenerService _linkShortenerService;
         private readonly LinkShortenerSettings _settings;
         private readonly ButtonEventListener _buttonEventListener;
@@ -42,8 +39,6 @@ namespace CoderDojo.Management.Discord.Modules
             _buttonEventListener = buttonEventListener;
         }
 
-
-
         [SlashCommand("list", "lists all links")]
         public async Task ListLinks(string searchterm = "")
         {
@@ -52,23 +47,7 @@ namespace CoderDojo.Management.Discord.Modules
                 return;
             }
 
-            var items = await _linkShortenerService.GetAllLinksAsync();
-            if (!string.IsNullOrWhiteSpace(searchterm))
-            {
-                var liketerm = searchterm;
-                liketerm = !liketerm.StartsWith('*') ? '*' + liketerm : liketerm;
-                liketerm = !liketerm.EndsWith('*') ? liketerm + '*' : liketerm;
-
-                items = items.Where(x => x.Id.Contains(searchterm) || LikeOperator.LikeString(x.Id, liketerm, Microsoft.VisualBasic.CompareMethod.Text));
-            }
-
-            var builders = items.Select(x => new EmbedFieldBuilder
-            {
-                Name = x.Id,
-                Value = $"Id: `{x.Id}`\nShortLink: `{x.ShortenedLink}`\nOriginal link: `{x.Url}`"
-            })
-            .Select(x => x.Build())
-            .ToList();
+            var builders = await GetSearchResults(searchterm);
 
             var page = 0;
             var pageSize = 5;
@@ -141,8 +120,31 @@ namespace CoderDojo.Management.Discord.Modules
                     yield return embedBuilder.Build();
                 }
             }
+
+            async Task<List<EmbedField>> GetSearchResults(string searchterm)
+            {
+                var items = await _linkShortenerService.GetAllLinksAsync();
+                if (!string.IsNullOrWhiteSpace(searchterm))
+                {
+                    var liketerm = searchterm;
+                    liketerm = !liketerm.StartsWith('*') ? '*' + liketerm : liketerm;
+                    liketerm = !liketerm.EndsWith('*') ? liketerm + '*' : liketerm;
+
+                    items = items.Where(x => x.Id.Contains(searchterm) || LikeOperator.LikeString(x.Id, liketerm, Microsoft.VisualBasic.CompareMethod.Text));
+                }
+
+                var builders = items.Select(x => new EmbedFieldBuilder
+                {
+                    Name = x.Id,
+                    Value = $"Id: `{x.Id}`\nShortLink: `{x.ShortenedLink}`\nOriginal link: `{x.Url}`"
+                })
+                .Select(x => x.Build())
+                .ToList();
+                return builders;
+            }
         }
 
+         
 
 
         [SlashCommand("create", "creates shortlink")]
