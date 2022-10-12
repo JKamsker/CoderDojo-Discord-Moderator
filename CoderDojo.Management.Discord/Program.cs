@@ -25,30 +25,25 @@ Host.CreateDefaultBuilder(args)
         {
             services
                 .AddOptions()
+                .AddHttpClient()
+                .AddApplicationInsightsTelemetryWorkerService()
+
+                .Configure<DiscordSettings>(hostContext.Configuration.GetSection("Discord"))
+                
                 .AddSingleton<CommandHandlingService>()
                 .AddSingleton<SlashCommandService>()
                 .AddSingleton<CommandService, InjectableCommandService>()
                 .AddHostedService<BotService>()
                 .AddSingleton<DiscordSocketClient>()
-                .AddSingleton<ButtonEventListener>()
-
-                .AddHttpClient()
-                .AddApplicationInsightsTelemetryWorkerService()
-                ;
-
-            services.Configure<DiscordSettings>(hostContext.Configuration.GetSection("Discord"));
-
-            // remove the hosted service
-            // services.AddHostedService<Worker>();
-
-            // register your services here.
-            RegisterLinkshortener(services, hostContext.Configuration);
+                .AddSingleton<ButtonEventListener>();
+            
+            AddLinkshortener(services, hostContext.Configuration);
 
         })
         .Build().Run(); ;
 
 
-static void RegisterLinkshortener(IServiceCollection services, IConfiguration configuration)
+static void AddLinkshortener(IServiceCollection services, IConfiguration configuration)
 {
     services.AddTransient<LinkShortenerService>();
     var lsAccessKey = configuration.GetSection("Linkshortener:AccessKey")?.Value;
