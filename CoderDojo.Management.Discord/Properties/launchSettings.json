@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "CoderDojo.Management.Discord": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
+    }
+  }
+}

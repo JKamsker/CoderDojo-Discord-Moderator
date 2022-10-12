@@ -11,6 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using DiscordBot.Modules.Services;
 using System.Net;
+using CoderDojo.Management.Discord.Modules;
 
 Host.CreateDefaultBuilder(args)
         .ConfigureAppConfiguration((context, builder) =>
@@ -29,6 +30,7 @@ Host.CreateDefaultBuilder(args)
                 .AddSingleton<CommandService, InjectableCommandService>()
                 .AddHostedService<BotService>()
                 .AddSingleton<DiscordSocketClient>()
+                .AddSingleton<ButtonEventListener>()
 
                 .AddHttpClient()
                 .AddApplicationInsightsTelemetryWorkerService()

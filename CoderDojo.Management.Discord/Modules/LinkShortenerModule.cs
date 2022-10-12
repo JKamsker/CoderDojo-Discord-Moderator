@@ -15,39 +15,35 @@ using System.Text;
 
 //using linqasync::System.Linq;
 using Microsoft.VisualBasic.CompilerServices;
+using CoderDojo.Management.Discord.InteractionServices;
 
 namespace CoderDojo.Management.Discord.Modules
 {
+
+
     [Group("shortlink", "Shortens a link!")]
     public class LinkShortenerModule : InteractionModuleBase
     {
-        //private readonly ChallengeService _challengeService;
-        //private readonly ChallengeServiceStorage _serviceStorage;
-
-        //public ChallengeModule
-        //(
-        //    ChallengeService challengeService,
-        //    ChallengeServiceStorage serviceStorage
-        //)
-        //{
-        //    _challengeService = challengeService;
-        //    _serviceStorage = serviceStorage;
-        //}
 
         private readonly LinkShortenerService _linkShortenerService;
         private readonly LinkShortenerSettings _settings;
+        private readonly ButtonEventListener _buttonEventListener;
 
-        public LinkShortenerModule(LinkShortenerService linkShortenerService, LinkShortenerSettings settings)
+        public LinkShortenerModule
+        (
+            LinkShortenerService linkShortenerService,
+            LinkShortenerSettings settings,
+            ButtonEventListener buttonEventListener
+        )
         {
             _linkShortenerService = linkShortenerService;
             _settings = settings;
+            _buttonEventListener = buttonEventListener;
         }
 
         [SlashCommand("list", "lists all links")]
         public async Task ListLinks(string searchterm = "")
         {
-            //await this.Context.Interaction.RespondAsync("Hello world");
-
             var items = await _linkShortenerService.GetAllLinksAsync();
 
             if (!string.IsNullOrWhiteSpace(searchterm))
@@ -59,34 +55,90 @@ namespace CoderDojo.Management.Discord.Modules
                 items = items.Where(x => x.Id.Contains(searchterm) || LikeOperator.LikeString(x.Id, liketerm, Microsoft.VisualBasic.CompareMethod.Text));
             }
 
-            //await PagedReplyAsync(items.Select(x => new EmbedFieldBuilder
-            //{
-            //    Name = x.Id,
-            //    Value = $"Id: `{x.Id}`\nShortLink: `{x.ShortenedLink}`\nOriginal link: `{x.Url}`"
-            //}));
-
             var builders = items.Select(x => new EmbedFieldBuilder
             {
                 Name = x.Id,
                 Value = $"Id: `{x.Id}`\nShortLink: `{x.ShortenedLink}`\nOriginal link: `{x.Url}`"
             })
             .Select(x => x.Build())
-            .Take(10)
             .ToList();
 
-            var embed = new EmbedBuilder();
-            builders.ForEach(x => embed.AddField(x.Name, x.Value));
+            var page = 0;
+            var pageSize = 5;
+            var maxPage = (int)Math.Ceiling((decimal)(builders.Count / pageSize));
 
-            //await ReplyAsync(
-            //await ReplyAsync()
 
-            await RespondAsync("", new[] { embed.Build() }, ephemeral: true);
+            await RespondAsync
+            (
+                $"Page {page}/{builders.Count / pageSize} | {builders.Count} Items",
+                embeds: BuildPagedEmbed(builders, page, pageSize).ToArray(),
+                ephemeral: true,
+                components: BuildPagingButtons(page, maxPage)
+            );
+
             var response = await this.Context.Interaction.GetOriginalResponseAsync();
-            
-        }
-        
+            Console.WriteLine("ResponseId:" + response.Id);
 
-        [SlashCommand("hello", "says hello")]
+            _buttonEventListener.Subscribe(response.Id, async x =>
+            {
+                page = x.Data.CustomId switch
+                {
+                    "+" => page + 1,
+                    "-" => page + -1,
+
+                    "--" => 0,
+                    "++" => maxPage,
+                    _ => 0
+                };
+
+                page = Math.Max(0, page);
+                page = Math.Min(maxPage, page);
+
+                await x.UpdateAsync(m =>
+                {
+                    m.Content = new($"Page {page}/{builders.Count / pageSize} | {builders.Count} Items");
+                    m.Embeds = new(BuildPagedEmbed(builders, page, pageSize).ToArray());
+                    m.Components = BuildPagingButtons(page, maxPage);
+                });
+
+            });
+
+            static MessageComponent BuildPagingButtons(int page, int maxPage)
+            {
+                var canNavigateLeft = page > 0;
+                var canNavigateRight = page < maxPage;
+
+                var builder = new ComponentBuilder()
+                    .WithButton("|<<", "--", disabled: !canNavigateLeft)
+                    .WithButton("<<", "-", disabled: !canNavigateLeft)
+                    .WithButton(">>", "+", disabled: !canNavigateRight)
+                    .WithButton(">>|", "++", disabled: !canNavigateRight)
+                ;
+
+                var components = builder.Build();
+                return components;
+            }
+
+            static IEnumerable<Embed> BuildPagedEmbed(List<EmbedField> builders, int page, int pageSize)
+            {
+                return BuildEmbed(builders.Skip(page * pageSize).Take(pageSize));
+            }
+
+            static IEnumerable<Embed> BuildEmbed(IEnumerable<EmbedField> builders)
+            {
+                foreach (var x in builders)
+                {
+                    var embedBuilder = new EmbedBuilder();
+
+                    embedBuilder.AddField(x.Name, x.Value);
+                    yield return embedBuilder.Build();
+                }
+            }
+        }
+
+
+
+        [SlashCommand("add", "adds a shortlink")]
         public async Task HelloWorld() //string searchString = ""
         {
             var builder = new ComponentBuilder()

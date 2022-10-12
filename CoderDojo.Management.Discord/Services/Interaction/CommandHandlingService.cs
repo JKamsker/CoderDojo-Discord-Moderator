@@ -18,7 +18,6 @@ using System.Reflection;
 using System.Threading.Tasks;
 
 namespace CoderDojo.Management.Discord.InteractionServices;
-
 public partial class CommandHandlingService
 {
     private readonly CommandService _commands;
@@ -64,14 +63,18 @@ public partial class CommandHandlingService
         //_discord.ReactionRemoved += (x, y, z) => ReactionAction(x, y, z, ReactionType.Removed);
         //_discord.ReactionsCleared += (x, y) => ReactionAction(x, y, null, ReactionType.Cleared);
 
-        _discord.ButtonExecuted += ButtonExecuted;
+        //_discord.ButtonExecuted += ButtonExecuted;
     }
 
-    private async Task ButtonExecuted(SocketMessageComponent arg)
-    {
-        Console.WriteLine("Button executed!");
-        await arg.RespondAsync("Arrrr");
-    }
+    //private async Task ButtonExecuted(SocketMessageComponent arg)
+    //{
+    //    // ResponseId == arg.Message.Id
+    //    // arg.Message.Id == 1029825860863283220
+    //    // arg.Data.CustomId == custom-id
+
+    //    Console.WriteLine("Button executed!");
+    //    await arg.RespondAsync("Arrrr");
+    //}
 
     private void InitializePrefix()
     {
