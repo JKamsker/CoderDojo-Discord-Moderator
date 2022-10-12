@@ -16,6 +16,7 @@ using System.Text;
 //using linqasync::System.Linq;
 using Microsoft.VisualBasic.CompilerServices;
 using CoderDojo.Management.Discord.InteractionServices;
+using MongoDB.Driver;
 
 namespace CoderDojo.Management.Discord.Modules
 {
@@ -41,11 +42,17 @@ namespace CoderDojo.Management.Discord.Modules
             _buttonEventListener = buttonEventListener;
         }
 
+
+
         [SlashCommand("list", "lists all links")]
         public async Task ListLinks(string searchterm = "")
         {
-            var items = await _linkShortenerService.GetAllLinksAsync();
+            if (!await CheckPermissions())
+            {
+                return;
+            }
 
+            var items = await _linkShortenerService.GetAllLinksAsync();
             if (!string.IsNullOrWhiteSpace(searchterm))
             {
                 var liketerm = searchterm;
@@ -138,102 +145,51 @@ namespace CoderDojo.Management.Discord.Modules
 
 
 
-        [SlashCommand("add", "adds a shortlink")]
-        public async Task HelloWorld() //string searchString = ""
+        [SlashCommand("create", "creates shortlink")]
+        public async Task CreateLinkAsync(string id, string link)
         {
-            var builder = new ComponentBuilder()
-                .WithButton("label", "custom-id");
+            if (!await CheckPermissions())
+            {
+                return;
+            }
 
-            //await ReplyAsync("Here is a button!", components: builder.Build());
-
-            await this.Context.Interaction.RespondAsync("Hello world", components: builder.Build());
-
-            //var embeds = _challengeService
-            //    .ListAsync(base.Context.User.Id)
-            //    //.SelectMany(x => x.Challenges.ToAsyncEnumerable())
-            //    .Select(x => new EmbedFieldBuilder
-            //    {
-            //        Name = x.ChallengeData.Name,
-            //        Value = $"Id: {x.RenderIdentifier()}\n" +
-            //                $"Name: *{x.ChallengeData.Name}*\n" +
-            //                $"Description: *{x.ChallengeData.Description}*\n" +
-            //                $"Prerequisits: {x.RenderPreRequisits()}"
-            //    })
-            //    ;
-
-            //var eb = new EmbedBuilder();
-            //await foreach (var embed in embeds)
-            //{
-            //    eb.AddField(embed);
-            //}
-
-            //await this.Context.Interaction.RespondAsync(embed: eb.Build());
-            //var response = await this.Context.Interaction.GetOriginalResponseAsync();
+            await RespondAsync($"Creating {id} to {link}!");
+            var response = await this.Context.Interaction.GetOriginalResponseAsync();
+            await _linkShortenerService.ShortenUrl(id, _settings.AccessKey, link);
+            await response.ModifyAsync(x => x.Content = $"Create complete! Ready at https://meet.coderdojo.net/{id}");
         }
 
-        //[SlashCommand("start", "Start a new challenge!")]
-        //public async Task StartAsync(string identifier)
-        //{
-        //    var challenge = await _challengeService.StartChallengeAsync(identifier, Context.User.Id);
-        //    if (challenge is null)
-        //    {
-        //        await RespondAsync("`Sorry, i can't find that challenge`");
-        //        return;
-        //    }
 
-        //    var challengeText = string.IsNullOrWhiteSpace(challenge.Message)
-        //        ? "The challenge has no Text, sorry :("
-        //        : challenge.Message;
+        [SlashCommand("update", "updates shortlink")]
+        public async Task UpdateLinkAsync(string id, string link)
+        {
+            if (!await CheckPermissions())
+            {
+                return;
+            }
 
-        //    await RespondAsync(challengeText, ephemeral: true);
+            await RespondAsync($"Updating {id} to {link}!");
+            var response = await this.Context.Interaction.GetOriginalResponseAsync();
+            await _linkShortenerService.UpdateUrlAsync(id, _settings.AccessKey, link);
+            await response.ModifyAsync(x => x.Content = $"Update complete! Ready at http://meet.coderdojo.net/{id}");
+        }
 
-        //    if (challenge.Attachments?.Length is not null and > 0)
-        //    {
-        //        var streams = challenge.Attachments
-        //            .Select(x => Encoding.UTF8.GetBytes(x))
-        //            .Select(x => new MemoryStream(x))
-        //            .Select((x, i) => new FileAttachment(x, i > 1 ? $"ChallengeAttachment-{i}.txt" : "ChallengeAttachment.txt"))
-        //            .ToList();
 
-        //        // await Context.Channel.SendFilesAsync(streams);
+        private async Task<bool> CheckPermissions()
+        {
+            var user = base.Context.User;
+            if (user is not IGuildUser gu)
+            {
+                await RespondAsync("https://dontgetserious.com/wp-content/uploads/2022/01/Wait-A-Minute-Memes-768x577.jpeg", ephemeral: true);
+                return false;
+            }
 
-        //        await Context.Interaction.FollowupWithFilesAsync(streams, "Your input", ephemeral: true);
-
-        //    }
-
-        //    //await Context.Channel.SendFileAsync(Stream.Null, "Info.Text");
-        //}
-
-        //[SlashCommand("solve", "Send your solution!")]
-        //public async Task SolveAsync(string identifier, string solution)
-        //{
-        //    var challengeResult = await _challengeService.SolveChallengeAsync(Context.User.Id, new ChallengeSolutionRequestDto
-        //    {
-        //        ChallengeIdentifier = identifier,
-        //        Result = solution
-        //    });
-
-        //    var message = challengeResult.Success ? "Success!" : "No success.";
-        //    if (!string.IsNullOrEmpty(challengeResult.Message))
-        //    {
-        //        message += $"\n{challengeResult.Message}";
-        //    }
-
-        //    await this.Context.Interaction.RespondAsync(message);
-        //}
-
-        //[AutocompleteCommand("identifier", "challenge start")]
-        //public async Task Autocomplete()
-        //{
-        //    ListAsync<AutocompleteResult> results = new ListAsync<AutocompleteResult>();
-
-        //    results.Add(new AutocompleteResult("identifier", "ayay"));
-        //    results.Add(new AutocompleteResult("identifier", "xA"));
-
-        //    if (Context.Interaction is SocketAutocompleteInteraction sai)
-        //    {
-        //        await sai.RespondAsync(results);
-        //    }
-        //}
+            if (!gu.GuildPermissions.Administrator)
+            {
+                await RespondAsync("https://img-9gag-fun.9cache.com/photo/a1rL3vY_700bwp.webp", ephemeral: true);
+                return false;
+            }
+            return true;
+        }
     }
 }
