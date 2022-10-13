@@ -8,6 +8,7 @@ on:
       - v*
 env:
   IMAGE_NAME: cd-management-bot
+  REGISTRY: ghcr.io
 jobs:
   build_and_push:
     runs-on: ubuntu-latest
