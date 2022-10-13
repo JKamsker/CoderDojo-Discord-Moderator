@@ -39,6 +39,9 @@ jobs:
           echo IMAGE_ID="${{env.IMAGE_ID}}"
           echo VERSION="${{env.VERSION}}"
       - 
+        name: Log into registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com -u ${{ github.actor }} --password-stdin
+      - 
         name: Push api-base image
         run: |
           CURRENT_ID=$IMAGE_ID
