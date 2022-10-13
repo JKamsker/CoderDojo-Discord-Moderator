@@ -18,7 +18,8 @@ jobs:
       - 
         name: Calculate Publishing Variables
         run: |
-          IMAGE_ID=docker.pkg.github.com/${{ github.repository }}
+          # docker.pkg.github.com/
+          IMAGE_ID=${{ github.repository }}
 
           # Change all uppercase to lowercase
           IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
@@ -42,9 +43,10 @@ jobs:
         name: Log into registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com -u ${{ github.actor }} --password-stdin
       - 
-        name: Push api-base image
+        name: Push cdmgmtbot image
         run: |
-          CURRENT_ID=$IMAGE_ID
+          # CURRENT_ID=$IMAGE_ID
+          CURRENT_ID=jkamsker/coderdojo-discord-moderator/CDManagementBot
           docker tag cdmgmtbot $CURRENT_ID:$VERSION
           docker tag cdmgmtbot $CURRENT_ID:latest
 
