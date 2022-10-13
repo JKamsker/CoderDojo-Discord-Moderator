@@ -1,0 +1,49 @@
+name: Docker
+
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - v*
+env:
+  IMAGE_NAME: CDManagementBot
+jobs:
+  build_and_push:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+
+    steps:
+      - uses: actions/checkout@v2
+      - 
+        name: Calculate Publishing Variables
+        run: |
+          IMAGE_ID=docker.pkg.github.com/${{ github.repository }}
+
+          # Change all uppercase to lowercase
+          IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
+
+          VERSION=0.1.${{github.run_number}}
+
+          echo "IMAGE_ID=$IMAGE_ID" >> $GITHUB_ENV
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+          echo "IMAGE_ID=$IMAGE_ID"
+          echo "VERSION=$VERSION"
+      - 
+        name: Build Bot
+        run: docker build -t cdmgmtbot .
+      - 
+        name: Echoing the publishing Variables
+        run: |
+          echo IMAGE_ID="${{env.IMAGE_ID}}"
+          echo VERSION="${{env.VERSION}}"
+      - 
+        name: Push api-base image
+        run: |
+          CURRENT_ID=$IMAGE_ID
+          docker tag cdmgmtbot $CURRENT_ID:$VERSION
+          docker tag cdmgmtbot $CURRENT_ID:latest
+
+          docker push $CURRENT_ID:$VERSION
+          docker push $CURRENT_ID:latest
