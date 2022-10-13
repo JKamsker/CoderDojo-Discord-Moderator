@@ -40,31 +40,31 @@ jobs:
         run: |
           echo IMAGE_ID="${{env.IMAGE_ID}}"
           echo VERSION="${{env.VERSION}}"
-      # - 
-      #   name: Log into registry
-      #   run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com -u ${{ github.actor }} --password-stdin
-      # - 
-      #   name: Push cdmgmtbot image
-      #   run: |
-      #     CURRENT_ID=$IMAGE_ID
-      #     # CURRENT_ID=jkamsker/coderdojo-discord-moderator/CDManagementBot
-      #     docker tag cdmgmtbot $CURRENT_ID:$VERSION
-      #     docker tag cdmgmtbot $CURRENT_ID:latest
-
-      #     docker push $CURRENT_ID:$VERSION
-      #     docker push $CURRENT_ID:latest
-
       - 
-        name: Log in to the Container registry
-        uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+        name: Log into registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
       - 
-        name: Build and push Docker image
-        uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
-        with:
-          context: .
-          push: true
-          tags: jkamsker/coderdojo-discord-moderator/cd-management-bot:latest
+        name: Push cdmgmtbot image
+        run: |
+          CURRENT_ID=$IMAGE_ID
+          # CURRENT_ID=jkamsker/coderdojo-discord-moderator/CDManagementBot
+          docker tag cdmgmtbot $CURRENT_ID:$VERSION
+          docker tag cdmgmtbot $CURRENT_ID:latest
+
+          docker push $CURRENT_ID:$VERSION
+          docker push $CURRENT_ID:latest
+
+      # - 
+      #   name: Log in to the Container registry
+      #   uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
+      #   with:
+      #     registry: ${{ env.REGISTRY }}
+      #     username: ${{ github.actor }}
+      #     password: ${{ secrets.GITHUB_TOKEN }}
+      # - 
+      #   name: Build and push Docker image
+      #   uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
+      #   with:
+      #     context: .
+      #     push: true
+      #     tags: jkamsker/coderdojo-discord-moderator/cd-management-bot:latest
