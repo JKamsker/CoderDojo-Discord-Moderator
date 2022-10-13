@@ -67,4 +67,4 @@ jobs:
         with:
           context: .
           push: true
-          tags: jkamsker/CoderDojo-Discord-Moderator/cd-management-bot:latest
+          tags: jkamsker/coderDojo-discord-moderator/cd-management-bot:latest
