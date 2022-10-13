@@ -46,7 +46,7 @@ jobs:
       - 
         name: Push cdmgmtbot image
         run: |
-          CURRENT_ID=$IMAGE_ID
+          CURRENT_ID=ghcr.io/$IMAGE_ID
           # CURRENT_ID=jkamsker/coderdojo-discord-moderator/CDManagementBot
           docker tag cdmgmtbot $CURRENT_ID:$VERSION
           docker tag cdmgmtbot $CURRENT_ID:latest
