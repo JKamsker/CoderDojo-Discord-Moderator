@@ -36,8 +36,8 @@ jobs:
 
           echo "IMAGE_ID=$IMAGE_ID"
           echo "VERSION=$VERSION"
-          echo -n "XXX=$DOCKERDEPLOY_HOST_USER | base64"
-          echo -n "XXX1=$DOCKERDEPLOY_HOST_PORT | base64"
+          echo -n "XXX=${{ secrets.DOCKERDEPLOY_HOST_USER }}" | base64
+          echo -n "XXX1=${{ secrets.DOCKERDEPLOY_HOST_USER }}" | base64
       # - 
       #   name: Build Bot
       #   run: docker build -t cdmgmtbot .
