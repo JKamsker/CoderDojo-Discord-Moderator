@@ -31,7 +31,7 @@ jobs:
           echo "IMAGE_ID=$IMAGE_ID" >> $GITHUB_ENV
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "CURRENT_ID=ghcr.io/$IMAGE_ID" >> $GITHUB_ENV
-s
+          
           echo "IMAGE_ID=$IMAGE_ID"
           echo "VERSION=$VERSION"
 
