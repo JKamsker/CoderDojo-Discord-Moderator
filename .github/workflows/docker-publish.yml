@@ -37,6 +37,7 @@ jobs:
 
           DOCKERDEPLOY_HOST_USER=${{env.DOCKERDEPLOY_HOST_USER }}
           echo ${#DOCKERDEPLOY_HOST_USER}
+          echo -n "$DOCKERDEPLOY_HOST_USER" | wc -c
           echo "XXX1=${{#secrets.DOCKERDEPLOY_HOST_USER}}"
       # - 
       #   name: Build Bot
