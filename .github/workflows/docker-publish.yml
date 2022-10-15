@@ -52,3 +52,16 @@ jobs:
 
           docker push $CURRENT_ID:$VERSION
           docker push $CURRENT_ID:latest
+      - 
+        name: Deploy to Server via SSH action
+        uses: appleboy/ssh-action@v0.1.3
+        with:
+          HOST: ${{ secrets.DOCKERDEPLOY_HOST }}
+          USERNAME: ${{ secrets.DOCKERDEPLOY_HOST_USER }}
+          port: ${{ secrets.DOCKERDEPLOY_HOST_PORT }}
+          KEY: ${{ secrets.DOCKERDEPLOY_PK }}
+          envs: ${{ env.CURRENT_ID }}
+          script: |
+            cd /root/custom_dockerfiles/infrastructure
+            echo "${{secrets.GITHUB_TOKEN}}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            docker pull "${{ env.CURRENT_ID }}" && docker-compose up -d
