@@ -35,12 +35,10 @@ jobs:
           echo "IMAGE_ID=$IMAGE_ID"
           echo "VERSION=$VERSION"
 
-          DOCKERDEPLOY_HOST_USER=${{env.DOCKERDEPLOY_HOST_USER }}
           echo ${#DOCKERDEPLOY_HOST_USER}
           echo -n "$DOCKERDEPLOY_HOST_USER" | wc -c
           echo -n "${{env.DOCKERDEPLOY_HOST_USER }}" | wc -c
           echo -n "${{secrets.DOCKERDEPLOY_HOST_USER }}" | wc -c
-          echo "XXX1=${{env.DOCKERDEPLOY_HOST_USER}}"
       # - 
       #   name: Build Bot
       #   run: docker build -t cdmgmtbot .
