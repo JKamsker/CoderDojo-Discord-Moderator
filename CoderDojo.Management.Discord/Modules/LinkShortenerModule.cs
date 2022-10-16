@@ -144,7 +144,7 @@ namespace CoderDojo.Management.Discord.Modules
             }
         }
 
-         
+
 
 
         [SlashCommand("create", "creates shortlink")]
@@ -158,7 +158,15 @@ namespace CoderDojo.Management.Discord.Modules
             await RespondAsync($"Creating {id} to {link}!", ephemeral: true);
             var response = await this.Context.Interaction.GetOriginalResponseAsync();
             await _linkShortenerService.ShortenUrl(id, _settings.AccessKey, link);
-            await response.ModifyAsync(x => x.Content = $"Create complete! Ready at https://meet.coderdojo.net/{id}");
+            await FollowupAsync($"Create complete! Ready at https://meet.coderdojo.net/{id}", ephemeral: true);
+            try
+            {
+                await response.DeleteAsync();
+            }
+            catch (Exception)
+            {
+
+            }
         }
 
 
@@ -173,7 +181,16 @@ namespace CoderDojo.Management.Discord.Modules
             await RespondAsync($"Updating {id} to {link}!", ephemeral: true);
             var response = await this.Context.Interaction.GetOriginalResponseAsync();
             await _linkShortenerService.UpdateUrlAsync(id, _settings.AccessKey, link);
-            await response.ModifyAsync(x => x.Content = $"Update complete! Ready at http://meet.coderdojo.net/{id}");
+            await FollowupAsync($"Update complete! Ready at http://meet.coderdojo.net/{id}", ephemeral: true);
+            
+            try
+            {
+                await response.DeleteAsync();
+            }
+            catch (Exception)
+            {
+
+            }
         }
 
 
