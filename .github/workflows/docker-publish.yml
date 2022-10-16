@@ -39,26 +39,26 @@ jobs:
           echo -n "$DOCKERDEPLOY_HOST_USER" | wc -c
           echo -n "${{env.DOCKERDEPLOY_HOST_USER }}" | wc -c
           echo -n "${{secrets.DOCKERDEPLOY_HOST_USER }}" | wc -c
-      # - 
-      #   name: Build Bot
-      #   run: docker build -t cdmgmtbot .
-      # - 
-      #   name: Echoing the publishing Variables
-      #   run: |
-      #     echo IMAGE_ID="${{env.IMAGE_ID}}"
-      #     echo VERSION="${{env.VERSION}}"
-      # - 
-      #   name: Log into registry
-      #   run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-      # - 
-      #   name: Push cdmgmtbot image
-      #   run: |
-      #     CURRENT_ID=ghcr.io/$IMAGE_ID
-      #     docker tag cdmgmtbot $CURRENT_ID:$VERSION
-      #     docker tag cdmgmtbot $CURRENT_ID:latest
+      - 
+        name: Build Bot
+        run: docker build -t cdmgmtbot .
+      - 
+        name: Echoing the publishing Variables
+        run: |
+          echo IMAGE_ID="${{env.IMAGE_ID}}"
+          echo VERSION="${{env.VERSION}}"
+      - 
+        name: Log into registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+      - 
+        name: Push cdmgmtbot image
+        run: |
+          CURRENT_ID=ghcr.io/$IMAGE_ID
+          docker tag cdmgmtbot $CURRENT_ID:$VERSION
+          docker tag cdmgmtbot $CURRENT_ID:latest
 
-      #     docker push $CURRENT_ID:$VERSION
-      #     docker push $CURRENT_ID:latest
+          docker push $CURRENT_ID:$VERSION
+          docker push $CURRENT_ID:latest
       - 
         name: Deploy to Server via SSH action
         uses: appleboy/ssh-action@v0.1.3
