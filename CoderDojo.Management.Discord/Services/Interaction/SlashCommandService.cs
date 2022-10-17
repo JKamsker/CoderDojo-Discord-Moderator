@@ -4,6 +4,7 @@ using Discord.Net;
 using Discord.WebSocket;
 
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 using Newtonsoft.Json;
 
@@ -19,10 +20,12 @@ public class SlashCommandService
     private readonly DiscordSocketClient _client;
     private readonly ILogger<SlashCommandService> _logger;
     private readonly IServiceProvider _serviceProvider;
+    private readonly DiscordSettings _settings;
 
     public SlashCommandService
     (
         DiscordSocketClient discord,
+        IOptions<DiscordSettings> options,
         ILogger<SlashCommandService> logger,
         IServiceProvider serviceProvider
     )
@@ -31,12 +34,16 @@ public class SlashCommandService
         _client = discord;
         _logger = logger;
         _serviceProvider = serviceProvider;
+        _settings = options.Value;
     }
 
     public async Task InitializeAsync()
     {
         await _interactionService.AddModulesAsync(System.Reflection.Assembly.GetExecutingAssembly(), _serviceProvider);
-        await _interactionService.RegisterCommandsToGuildAsync(704990064039559238);
+        if (_settings.MainServerId is not null)
+        {
+            await _interactionService.RegisterCommandsToGuildAsync(_settings.MainServerId.Value);
+        }
 
 
         _interactionService.AutocompleteCommandExecuted += async (a, b, c) =>

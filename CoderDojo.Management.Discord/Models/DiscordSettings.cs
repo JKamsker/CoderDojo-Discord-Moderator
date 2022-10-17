@@ -5,5 +5,5 @@ public class DiscordSettings
 {
     public string Token { get; set; }
     public string CommandPrefix { get; set; }
-    public ulong WelcomeMessageChannelId { get; set; }
+    public ulong? MainServerId { get; set; }
 }
