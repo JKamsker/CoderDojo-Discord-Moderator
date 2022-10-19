@@ -17,6 +17,7 @@
 
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.1" />
 		<PackageReference Include="MongoDB.Driver" Version="2.17.1" />
+		<PackageReference Include="ShlinkDotnet" Version="1.0.0" />
 
 
 

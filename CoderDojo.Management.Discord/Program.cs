@@ -11,6 +11,7 @@ using Microsoft.Extensions.Hosting;
 using DiscordBot.Modules.Services;
 using System.Net;
 using CoderDojo.Management.Discord.Modules;
+using ShlinkDotnet.Extensions;
 
 Host.CreateDefaultBuilder(args)
         .ConfigureAppConfiguration((context, builder) =>
@@ -33,8 +34,12 @@ Host.CreateDefaultBuilder(args)
                 .AddSingleton<SlashCommandService>()
                 .AddSingleton<CommandService, InjectableCommandService>()
                 .AddHostedService<BotService>()
-                .AddSingleton<DiscordSocketClient>()
-                .AddSingleton<ButtonEventListener>();
+                .AddSingleton<DiscordSocketClient>(x=> new DiscordSocketClient(new DiscordSocketConfig()
+                {
+                    UseInteractionSnowflakeDate = false
+                }))
+                .AddSingleton<ButtonEventListener>()
+                .AddShlink(hostContext.Configuration.GetSection("shlink"));
             
             AddLinkshortener(services, hostContext.Configuration);
 

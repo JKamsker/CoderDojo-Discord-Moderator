@@ -1,8 +1,5 @@
-﻿//using CoderDojo.Management.Discord.Services.Challenge;
+﻿using Discord;
 
-using Discord;
-
-//using Discord.Commands;
 using Discord.Interactions;
 using Discord.WebSocket;
 
@@ -11,30 +8,32 @@ using DiscordBot.Modules.Services;
 using System.Linq;
 using System.Text;
 
-//using global::System.Linq.Async;
-
-//using linqasync::System.Linq;
 using Microsoft.VisualBasic.CompilerServices;
 using CoderDojo.Management.Discord.InteractionServices;
 using MongoDB.Driver;
+using ShlinkDotnet.Web;
 
 namespace CoderDojo.Management.Discord.Modules
 {
     [Group("shortlink", "Shortens a link!")]
     public class LinkShortenerModule : InteractionModuleBase
     {
-        private readonly LinkShortenerService _linkShortenerService;
+        private readonly ShlinkApiClient _shlinkApiClient;
+
+        //private readonly LinkShortenerService _linkShortenerService;
         private readonly LinkShortenerSettings _settings;
         private readonly ButtonEventListener _buttonEventListener;
 
         public LinkShortenerModule
         (
-            LinkShortenerService linkShortenerService,
+            //LinkShortenerService linkShortenerService,
+            ShlinkApiClient shlinkApiClient,
             LinkShortenerSettings settings,
             ButtonEventListener buttonEventListener
         )
         {
-            _linkShortenerService = linkShortenerService;
+            //_linkShortenerService = linkShortenerService;
+            _shlinkApiClient = shlinkApiClient;
             _settings = settings;
             _buttonEventListener = buttonEventListener;
         }
@@ -42,6 +41,7 @@ namespace CoderDojo.Management.Discord.Modules
         [SlashCommand("list", "lists all links")]
         public async Task ListLinks(string searchterm = "")
         {
+            await DeferAsync(true);
             if (!await CheckPermissions())
             {
                 return;
@@ -54,13 +54,19 @@ namespace CoderDojo.Management.Discord.Modules
             var maxPage = (int)Math.Ceiling((decimal)(builders.Count / pageSize));
 
 
-            await RespondAsync
-            (
-                $"Page {page}/{builders.Count / pageSize} | {builders.Count} Items",
-                embeds: BuildPagedEmbed(builders, page, pageSize).ToArray(),
-                ephemeral: true,
-                components: BuildPagingButtons(page, maxPage)
-            );
+            await this.Context.Interaction.ModifyOriginalResponseAsync(x =>
+            {
+                x.Content = $"Page {page}/{builders.Count / pageSize} | {builders.Count} Items";
+                x.Embeds = BuildPagedEmbed(builders, page, pageSize).ToArray();
+                x.Components = BuildPagingButtons(page, maxPage);
+            });
+            //await RespondAsync
+            //(
+            //    text: $"Page {page}/{builders.Count / pageSize} | {builders.Count} Items",
+            //    embeds: BuildPagedEmbed(builders, page, pageSize).ToArray(),
+            //    ephemeral: true,
+            //    components: BuildPagingButtons(page, maxPage)
+            //);
 
             var response = await this.Context.Interaction.GetOriginalResponseAsync();
             Console.WriteLine("ResponseId:" + response.Id);
@@ -123,23 +129,27 @@ namespace CoderDojo.Management.Discord.Modules
 
             async Task<List<EmbedField>> GetSearchResults(string searchterm)
             {
-                var items = await _linkShortenerService.GetAllLinksAsync();
-                if (!string.IsNullOrWhiteSpace(searchterm))
-                {
-                    var liketerm = searchterm;
-                    liketerm = !liketerm.StartsWith('*') ? '*' + liketerm : liketerm;
-                    liketerm = !liketerm.EndsWith('*') ? liketerm + '*' : liketerm;
+                var items = _shlinkApiClient.EnumerateShortUrls(searchterm);
 
-                    items = items.Where(x => x.Id.Contains(searchterm) || LikeOperator.LikeString(x.Id, liketerm, Microsoft.VisualBasic.CompareMethod.Text));
-                }
 
-                var builders = items.Select(x => new EmbedFieldBuilder
+
+                //var items = await _linkShortenerService.GetAllLinksAsync();
+                //if (!string.IsNullOrWhiteSpace(searchterm))
+                //{
+                //    var liketerm = searchterm;
+                //    liketerm = !liketerm.StartsWith('*') ? '*' + liketerm : liketerm;
+                //    liketerm = !liketerm.EndsWith('*') ? liketerm + '*' : liketerm;
+
+                //    items = items.Where(x => x.Id.Contains(searchterm) || LikeOperator.LikeString(x.Id, liketerm, Microsoft.VisualBasic.CompareMethod.Text));
+                //}
+
+                var builders = await items.Select(x => new EmbedFieldBuilder
                 {
-                    Name = x.Id,
-                    Value = $"Id: `{x.Id}`\nShortLink: `{x.ShortenedLink}`\nOriginal link: `{x.Url}`"
+                    Name = !string.IsNullOrEmpty(x.Title) ? x.Title : x.ShortCode,
+                    Value = $"Id: `{x.ShortCode}`\nShortLink: `{x.ShortUrl}`\nOriginal link: `{x.LongUrl}`"
                 })
                 .Select(x => x.Build())
-                .ToList();
+                .ToListAsync();
                 return builders;
             }
         }
@@ -156,23 +166,31 @@ namespace CoderDojo.Management.Discord.Modules
             }
 
             await RespondAsync($"Creating {id} to {link}!", ephemeral: true);
-            await _linkShortenerService.ShortenUrl(id, _settings.AccessKey, link);
-            await Context.Interaction.ModifyOriginalResponseAsync(x => x.Content = $"Create complete! Ready at https://meet.coderdojo.net/{id}");
-        }
-
-
-        [SlashCommand("update", "updates shortlink")]
-        public async Task UpdateLinkAsync(string id, string link)
-        {
-            if (!await CheckPermissions())
+            var createResult = await _shlinkApiClient.CreateOrUpdateAsync(new ShlinkDotnet.Models.Create.CreateShortUrlWithSlugRequest
             {
-                return;
-            }
+                ShortCode = id,
+                LongUrl = link,
+                Tags = new[] { "discord_short_inapp" }
+            });
 
-            await RespondAsync($"Updating {id} to {link}!", ephemeral: true);
-            await _linkShortenerService.UpdateUrlAsync(id, _settings.AccessKey, link);
-            await Context.Interaction.ModifyOriginalResponseAsync(x => x.Content = $"Update complete! Ready at http://meet.coderdojo.net/{id}");
+            //await _linkShortenerService.ShortenUrl(id, _settings.AccessKey, link);
+            //await Context.Interaction.ModifyOriginalResponseAsync(x => x.Content = $"Create complete! Ready at https://meet.coderdojo.net/{id}");
+            await Context.Interaction.ModifyOriginalResponseAsync(x => x.Content = $"Create complete! Ready at {createResult.ShortUrl}");
         }
+
+
+        //[SlashCommand("update", "updates shortlink")]
+        //public async Task UpdateLinkAsync(string id, string link)
+        //{
+        //    if (!await CheckPermissions())
+        //    {
+        //        return;
+        //    }
+
+        //    await RespondAsync($"Updating {id} to {link}!", ephemeral: true);
+        //    await _linkShortenerService.UpdateUrlAsync(id, _settings.AccessKey, link);
+        //    await Context.Interaction.ModifyOriginalResponseAsync(x => x.Content = $"Update complete! Ready at http://meet.coderdojo.net/{id}");
+        //}
 
 
         private async Task<bool> CheckPermissions()
