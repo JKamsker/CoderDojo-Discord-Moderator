@@ -184,7 +184,10 @@ namespace CoderDojo.Management.Discord.Modules
                 return false;
             }
 
-            if (!gu.GuildPermissions.Administrator)
+            var isAllowed = gu.GuildPermissions.Administrator
+                || gu.RoleIds?.Contains((ulong)704990383293333534) == true;
+            
+            if (!isAllowed)
             {
                 await RespondAsync("https://img-9gag-fun.9cache.com/photo/a1rL3vY_700bwp.webp", ephemeral: true);
                 return false;
